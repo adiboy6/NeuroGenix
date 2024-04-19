@@ -104,6 +104,23 @@ def show():
         data = []
     return render_template('show.html', data=data, table_name=table_name)
 
+@app.route('/login')
+def verify():
+    table_name = request.args.get('table')
+    if table_name:
+        conn = get_db_connection()
+        conn.row_factory = extras.NamedTupleCursor
+        query = f"SELECT * FROM Users where UserType={usertype} and UserName={username} and password={password}"
+        try:
+            data = conn.execute(query).fetchall()
+        except psycopg2.Error as e:
+            data = []
+            print(f"User not found/User id incorrect/Password incorrect")
+        conn.close()
+    else:
+        data = []
+    return render_template('login.html', data=data, table_name=table_name)
+
 @app.route('/update', methods=['GET', 'POST'])
 def update():
     table_name = request.args.get('table')
@@ -206,4 +223,4 @@ def delete():
         return render_template('delete.html', table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(port=6000, debug=True)
