@@ -66,28 +66,28 @@
     <h1>Insert into {{ table_name }}</h1>
     <form method="post">
         {% for column in schema %}
-            {% if column[1] in special_fields %}
-                {% if column[1] == 'Gender' %}
+            {% if column[0] in special_fields %}
+                {% if column[0] == 'Gender' %}
                     <div class="radio-group">
-                        <label>{{ column[1] }}:</label>
+                        <label>{{ column[0] }}:</label>
                         {% for option in special_fields['Gender'] %}
-                            <input type="radio" id="{{ option }}" name="Gender" value="{{ option }}">
+                            <input type="radio" id="{{ option }}" name="{{ column[0] }}" value="{{ option }}">
                             <label for="{{ option }}">{{ option }}</label>
                         {% endfor %}
                     </div>
-                {% elif column[1] == 'Password' %}
+                {% elif column[0] == 'Password' %}
                     <!-- Password input -->
-                    <label for="{{ column[1] }}">{{ column[1] }}</label>
-                    <input type="password" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
-                {% elif column[1] == 'DOB' or column[1] == 'DataOfEntry' %}
+                    <label for="{{ column[0] }}">{{ column[0] }}</label>
+                    <input type="password" id="{{ column[0] }}" name="{{ column[0] }}" required><br>
+                {% elif column[0] == 'DOB' or column[0] == 'DataOfEntry' %}
                     <!-- Calendar input for date fields -->
-                    <label for="{{ column[1] }}">{{ column[1] }}</label>
-                    <input type="date" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
+                    <label for="{{ column[0] }}">{{ column[0] }}</label>
+                    <input type="date" id="{{ column[0] }}" name="{{ column[0] }}" required><br>
                 {% endif %}
             {% else %}
                 <!-- Default text input for other fields -->
-                <label for="{{ column[1] }}">{{ column[1] }}</label>
-                <input type="text" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
+                <label for="{{ column[0] }}">{{ column[0] }}</label>
+                <input type="text" id="{{ column[0] }}" name="{{ column[0] }}" required><br>
             {% endif %}
         {% endfor %}
         <input type="submit" value="Submit">

@@ -1,10 +1,11 @@
 import psycopg2
 from psycopg2 import extras
+from psycopg.rows import namedtuple_row, dict_row
 from urllib.parse import urlparse
 from faker import Faker
 from datetime import date
 from tqdm import tqdm
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, url_for
 
 
 app = Flask(__name__)
@@ -38,7 +39,10 @@ def get_table_names():
 def get_table_schema(table_name):
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = f"PRAGMA table_info({table_name})"
+    query = f"""SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = '{table_name}'
+    """
     cursor.execute(query)
     schema = cursor.fetchall()
     cursor.close()
@@ -47,17 +51,20 @@ def get_table_schema(table_name):
 def get_primary_key_and_values(table_name):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Assuming the first column is always the primary key, adjust accordingly
-    primary_key_query = f"PRAGMA table_info({table_name})"
+    # Retrieve the primary key column name using information_schema
+    primary_key_query = f"""SELECT column_name
+                              FROM information_schema.key_column_usage
+                              WHERE table_name = '{table_name}'"""
     cursor.execute(primary_key_query)
-    primary_key = cursor.fetchall()[0][1]  # Adjust based on your table schema
-
-    values_query = f"SELECT {primary_key} FROM {table_name}"
+    primary_key_name = cursor.fetchone()[0]
+    
+    # Retrieve primary key values from the table
+    values_query = f"SELECT {primary_key_name} FROM {table_name}"
     cursor.execute(values_query)
     primary_key_values = [row[0] for row in cursor.fetchall()]
 
     cursor.close()
-    return primary_key, primary_key_values
+    return primary_key_name, primary_key_values
 
 @app.route('/get-row', methods=['GET'])
 def get_row():
@@ -67,12 +74,12 @@ def get_row():
         return jsonify({"error": "Missing table name or primary key"}), 400
     
     schema = get_table_schema(table_name)
-    primary_key_name = schema[0][1]  # Assuming first column is the primary key
+    primary_key_name = schema[0][0]  # Adjusted to match PostgreSQL's output
     
     conn = get_db_connection()
-    conn.row_factory = extras.NamedTupleCursor
-    query = f"SELECT * FROM {table_name} WHERE {primary_key_name} = ?"
-    row = conn.execute(query, (primary_key,)).fetchone()
+    curr = conn.cursor(row_factory=namedtuple_row)
+    query = f"SELECT * FROM {table_name} WHERE {primary_key_name} = %s"
+    row = curr.execute(query, (primary_key,)).fetchone()
     conn.close()
     
     if row:
@@ -81,18 +88,55 @@ def get_row():
     else:
         return jsonify({"error": "Row not found"}), 404
 
+@app.route('/', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        # Retrieve form data
+        username = request.form.get('username')
+        password = request.form.get('password')
+        usertype = request.form.get('usertype')
 
-@app.route('/')
+        # Perform authentication (e.g., check username and password against a database)
+        if authenticate(username, password, usertype):
+            # Authentication successful, redirect to home page or some other authenticated route
+            return redirect(url_for('home', usertype=usertype))
+    else:
+        # Authentication failed, render login page with an error message
+        return render_template('login.html', error='Invalid credentials')
+
+def authenticate(username, password, usertype):
+    conn = get_db_connection()
+    curr = conn.cursor()
+    query = f"SELECT * FROM Users where UserType=\'{usertype}\' and UserName=\'{username}\' and password=\'{password}\'"
+    try:
+        curr.execute(query)
+        data = curr.fetchone()
+        if(data==[]):
+            raise psycopg2.Error
+        return True
+    except psycopg2.Error as e:
+        data = []
+        print(f"User not found/User id incorrect/Password incorrect")
+    conn.close()
+
+@app.route('/home')
 def home():
+    usertype = request.args.get('usertype')
     table_names = get_table_names()
-    return render_template('home.html', len = len(table_names), table_names = table_names)
+    if usertype=='Admin':
+        # Render the home page with user type
+        
+        return render_template('home.html', len = len(table_names), table_names = table_names)
+    else:
+        return redirect('/')
+
 
 @app.route('/show')
 def show():
     table_name = request.args.get('table')
     if table_name:
         conn = get_db_connection()
-        conn.row_factory = extras.NamedTupleCursor
+        conn.row_factory = namedtuple_row
         query = f"SELECT * FROM {table_name}"
         try:
             data = conn.execute(query).fetchall()
@@ -104,23 +148,6 @@ def show():
         data = []
     return render_template('show.html', data=data, table_name=table_name)
 
-@app.route('/login')
-def verify():
-    table_name = request.args.get('table')
-    if table_name:
-        conn = get_db_connection()
-        conn.row_factory = extras.NamedTupleCursor
-        query = f"SELECT * FROM Users where UserType={usertype} and UserName={username} and password={password}"
-        try:
-            data = conn.execute(query).fetchall()
-        except psycopg2.Error as e:
-            data = []
-            print(f"User not found/User id incorrect/Password incorrect")
-        conn.close()
-    else:
-        data = []
-    return render_template('login.html', data=data, table_name=table_name)
-
 @app.route('/update', methods=['GET', 'POST'])
 def update():
     table_name = request.args.get('table')
@@ -129,15 +156,15 @@ def update():
 
     if request.method == 'POST':
         schema = get_table_schema(table_name)
-        primary_key_name = schema[0][1]
+        primary_key_name = schema[0][0]
         # Handle form submission for updating the record
         # Fetch the primary key and updated values from the form
         primary_key = request.form['primary_key']
-        updated_values = {col: request.form[col] for col in request.form if col != 'primary_key'}
+        updated_values = {col[0]: request.form[col[0]] for col in schema if col[0] != 'primary_key'}
         
         # Construct the UPDATE query dynamically
-        set_clause = ', '.join([f"{col} = ?" for col in updated_values])
-        query = f"UPDATE {table_name} SET {set_clause} WHERE {primary_key_name} = ?"
+        set_clause = ', '.join([f"{col} = %s" for col in updated_values])
+        query = f"UPDATE {table_name} SET {set_clause} WHERE {primary_key_name} = %s"
         
         try:
             conn = get_db_connection()
@@ -150,10 +177,10 @@ def update():
     else:
         # For GET request, display the update form
         schema = get_table_schema(table_name)
-        primary_key_name = schema[0][1]  # Assuming first column is the primary key
+        primary_key_name = schema[0][0]  # Assuming first column is the primary key
         # Fetch primary key values for the dropdown
         conn = get_db_connection()
-        conn.row_factory = extras.NamedTupleCursor
+        conn.row_factory = namedtuple_row
         primary_keys = conn.execute(f"SELECT {primary_key_name} FROM {table_name}").fetchall()
         conn.close()
         
@@ -166,9 +193,9 @@ def insert():
         schema = get_table_schema(table_name)
         if request.method == 'POST':
             # Construct the INSERT INTO query dynamically
-            columns = ', '.join([col[1] for col in schema])  # col[1] is the column name in the schema
-            placeholders = ', '.join(['?' for _ in schema])
-            values = [request.form[col[1]] for col in schema]
+            columns = ', '.join([col[0] for col in schema])  # col[0] is the column name in the schema
+            placeholders = ', '.join(['%s' for _ in schema])
+            values = [request.form[col[0]] for col in schema]
             query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
             try:
                 conn = get_db_connection()
@@ -200,11 +227,11 @@ def delete():
     if request.method == 'POST':
         primary_key = request.form['primary_key']
         schema = get_table_schema(table_name)
-        primary_key_name = schema[0][1]  # Assuming first column is the primary key
+        primary_key_name = schema[0][0]  # Assuming first column is the primary key
         
         try:
             conn = get_db_connection()
-            query = f"DELETE FROM {table_name} WHERE {primary_key_name} = ?"
+            query = f"DELETE FROM {table_name} WHERE {primary_key_name} = %s"
             conn.execute(query, (primary_key,))
             conn.commit()
             conn.close()
@@ -216,11 +243,11 @@ def delete():
         # For GET request, display the delete form
         conn = get_db_connection()
         schema = get_table_schema(table_name)
-        primary_key_name = schema[0][1]  # Assuming first column is the primary key
-        conn.row_factory = psycopg2
+        primary_key_name = schema[0][0]  # Assuming first column is the primary key
+        conn.row_factory = namedtuple_row
         primary_keys = conn.execute(f"SELECT {primary_key_name} FROM {table_name}").fetchall()
         conn.close()
         return render_template('delete.html', table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
 
 if __name__ == '__main__':
-    app.run(port=6000, debug=True)
+    app.run(host='0.0.0.0', debug=True)
