@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NeuroGenix</title>
+    <style>
+        body {
+            background-color: #ffffff; /* Pure white background for a clean and light feel */
+            font-family: "Segoe UI", Arial, sans-serif; /* Accessible and professional font */
+            color: #5D5D5D; /* Soft grey for text */
+        }
+        h1 {
+            color: #4A90E2; /* Light blue for a soothing and inviting feel */
+            font-size: 75px; /* Increased font size for more impact */
+            font-weight: bold; /* Bold font weight for added authority */
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; /* Professional and modern font */
+            text-align: center; /* Ensure the heading is centered */
+            margin: 40px 0; /* Increase margin for better spacing */
+        }
+        .heading {
+            color: #333; /* Light blue for a soothing and inviting feel */
+            font-size: 28px; /* Larger font size for headings */
+            margin: 20px 0; /* Adjusted margin for spacing */
+        }
+        .table_name {
+            font-size: 18px; /* Larger font size for form elements */
+            margin: 10px auto; /* Centered margin */
+            font-family: "Segoe UI", Arial, sans-serif; /* Consistent, readable font */
+            background: #E1F5FE; /* Very light blue background */
+            color: #333; /* Darker text for readability */
+            border: 1px solid #B3E5FC; /* Subtle border color */
+            padding: 12px 20px; /* Increased padding for easier interaction */
+            border-radius: 20px; /* Soft rounded corners */
+            outline: none; /* Remove focus outline for aesthetics */
+            cursor: pointer; /* Indicate clickable */
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            width: 60%; /* Adjustable width */
+            display: block; /* Ensure full-width */
+        }
+        .home-page {
+            display: flex;
+            flex-direction: column; /* Align items in a column */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center; /* Center align text */
+        }
+        .btn {
+            font-size: 18px; /* Increased font size for buttons */
+            padding: 15px 30px; /* More padding for a larger clickable area */
+            margin: 10px;
+            color: #FFFFFF; /* White text for readability */
+            border: none; /* Remove border for cleaner look */
+            cursor: pointer;
+            border-radius: 25px; /* Rounded edges for a friendly feel */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+            transition: all 0.3s ease; /* Smooth transition for interactions */
+            background-color: #81D4FA; /* Light blue for a calm and inviting button */
+        }
+        .btn:hover {
+            transform: translateY(-2px); /* Subtle hover effect */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+        }
+        /* Adjusting button colors for actions to stay within the light theme */
+        .show { background-color: #B3E5FC; }
+        .insert { background-color: #81D4FA; }
+        .update { background-color: #4FC3F7; }
+        .delete { background-color: #29B6F6; }
+    </style>
+</head>
+<body>
+    <div class="home-page">
+        <h1>NeuroGenix</h1>
+        <div class="heading">On the table</div>
+        <form>
+            <select class="table_name" id="table_name" name="table_name">
+                {% for i in range(0, len) %}
+                <option value="{{ table_names[i] }}">{{ table_names[i] }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <div class="heading">perform</div>
+        <button type="button" class="btn show" onclick="submitForm('show')">Show</button>
+        <button type="button" class="btn insert" onclick="submitForm('insert')">Insert</button>
+        <button type="button" class="btn update" onclick="submitForm('update')">Update</button>
+        <button type="button" class="btn delete" onclick="submitForm('delete')">Delete</button>
+    </div>
+
+    <script>
+        function submitForm(actionType) {
+            var tableName = document.getElementById('table_name').value;
+            switch(actionType) {
+                case 'show':
+                    window.location.href = `/show?table=${tableName}`;
+                    break;
+                case 'update':
+                    window.location.href = `/update?table=${tableName}`;
+                    break;
+                case 'insert':
+                    window.location.href = `/insert?table=${tableName}`;
+                    break;
+                case 'delete':
+                    window.location.href = `/delete?table=${tableName}`;
+                    break;
+                default:
+                    // Handle unknown actionType if necessary
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>

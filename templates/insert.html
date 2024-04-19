@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Insert into {{ table_name }}</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding-top: 50px; /* Adds space at the top of the page */
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px; /* Adds a margin below the heading for spacing */
+        }
+        form {
+            max-width: 600px;
+            padding: 20px;
+            margin: auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="password"], 
+        select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .radio-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .radio-group label {
+            margin-right: 20px;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 5px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block; /* Center the button under the form */
+            margin: 20px auto 0; /* Center the button horizontally */
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Insert into {{ table_name }}</h1>
+    <form method="post">
+        {% for column in schema %}
+            {% if column[1] in special_fields %}
+                {% if column[1] == 'Gender' %}
+                    <div class="radio-group">
+                        <label>{{ column[1] }}:</label>
+                        {% for option in special_fields['Gender'] %}
+                            <input type="radio" id="{{ option }}" name="Gender" value="{{ option }}">
+                            <label for="{{ option }}">{{ option }}</label>
+                        {% endfor %}
+                    </div>
+                {% elif column[1] == 'Password' %}
+                    <!-- Password input -->
+                    <label for="{{ column[1] }}">{{ column[1] }}</label>
+                    <input type="password" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
+                {% elif column[1] == 'DOB' or column[1] == 'DataOfEntry' %}
+                    <!-- Calendar input for date fields -->
+                    <label for="{{ column[1] }}">{{ column[1] }}</label>
+                    <input type="date" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
+                {% endif %}
+            {% else %}
+                <!-- Default text input for other fields -->
+                <label for="{{ column[1] }}">{{ column[1] }}</label>
+                <input type="text" id="{{ column[1] }}" name="{{ column[1] }}" required><br>
+            {% endif %}
+        {% endfor %}
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
