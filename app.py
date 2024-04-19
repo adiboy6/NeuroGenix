@@ -111,7 +111,8 @@ def authenticate(username, password, usertype):
     try:
         curr.execute(query)
         data = curr.fetchone()
-        if(data==[]):
+        print(data)
+        if data is None:
             raise psycopg2.Error
         return True
     except psycopg2.Error as e:
@@ -123,10 +124,23 @@ def authenticate(username, password, usertype):
 def home():
     usertype = request.args.get('usertype')
     table_names = get_table_names()
+    button_options = ['Show', 'Insert', 'Update', 'Delete']
     if usertype=='Admin':
-        # Render the home page with user type
-        
-        return render_template('home.html', len = len(table_names), table_names = table_names)
+        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
+    elif usertype=='Professor':
+        button_options.remove('Insert')
+        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
+    elif usertype=='Guest':
+        print(table_names)
+        table_names.remove('researchinstitution')
+        table_names.remove('users')
+        table_names.remove('securitylogs')
+        button_options = ['Show']
+        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
+    elif usertype=='Researcher' or usertype=='Clinnician':
+        table_names.remove('users')
+        table_names.remove('securitylogs')
+        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
     else:
         return redirect('/')
 

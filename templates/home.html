@@ -78,33 +78,16 @@
                 {% endfor %}
             </select>
         </form>
-        <div class="heading">perform</div>
-        <button type="button" class="btn show" onclick="submitForm('show')">Show</button>
-        <button type="button" class="btn insert" onclick="submitForm('insert')">Insert</button>
-        <button type="button" class="btn update" onclick="submitForm('update')">Update</button>
-        <button type="button" class="btn delete" onclick="submitForm('delete')">Delete</button>
+        <div class="heading">Perform</div>
+        {% for option in button_options %}
+        <button type="button" class="btn {{ option.lower() }}" onclick="submitForm('{{ option.lower() }}')">{{ option }}</button>
+        {% endfor %}
     </div>
 
     <script>
         function submitForm(actionType) {
             var tableName = document.getElementById('table_name').value;
-            switch(actionType) {
-                case 'show':
-                    window.location.href = `/show?table=${tableName}`;
-                    break;
-                case 'update':
-                    window.location.href = `/update?table=${tableName}`;
-                    break;
-                case 'insert':
-                    window.location.href = `/insert?table=${tableName}`;
-                    break;
-                case 'delete':
-                    window.location.href = `/delete?table=${tableName}`;
-                    break;
-                default:
-                    // Handle unknown actionType if necessary
-                    break;
-            }
+            window.location.href = `/${actionType.toLowerCase()}?table=${tableName}`;
         }
     </script>
 </body>
