@@ -10,25 +10,26 @@
             display: flex;
         }
         .left-pane {
-            width: 200px; /* Set a fixed width for the left pane */
-            background-color: #f0f0f0; /* Light grey background */
+            width: 200px;
+            background-color: #f0f0f0;
             padding: 20px;
-            height: 100vh; /* Full viewport height */
-            box-shadow: 2px 0 5px 0 rgba(0,0,0,0.1); /* Subtle shadow to separate from the content area */
-            overflow-y: auto; /* Enables scrolling for long lists */
+            height: 100vh;
+            box-shadow: 2px 0 5px 0 rgba(0,0,0,0.1);
+            overflow-y: auto;
         }
         .left-pane .menu-item {
             padding: 10px;
             cursor: pointer;
             font-size: 16px;
-            border-left: 3px solid transparent; /* Default state with no highlight */
+            border-left: 3px solid transparent;
         }
         .left-pane .menu-item.selected {
-            border-left: 3px solid #4A90E2; /* Highlight selected item */
+            border-left: 3px solid #4A90E2;
             font-weight: bold;
+            background-color: #e1e1e1;
         }
         .content {
-            flex-grow: 1; /* Take up the remaining space */
+            flex-grow: 1;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -38,30 +39,90 @@
         .content h1, .content .heading {
             text-align: center;
         }
-        /* Existing CSS styles remain unchanged */
+        .table-buttons {
+            margin-bottom: 20px;
+        }
+        .table-buttons button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
     </style>
 </head>
 <body>
     <div class="left-pane">
-        <div class="menu-item selected" onclick="showDashboard()">Dashboard</div>
+        <div class="menu-item" onclick="showDashboard()">Dashboard</div>
         {% for table_name in table_names %}
-        <div class="menu-item" onclick="selectTable('{{ table_name }}')">{{ table_name }}</div>
+        <div class="menu-item" id="{{ table_name }}" onclick="selectTable('{{ table_name }}')">{{ table_name }}</div>
         {% endfor %}
     </div>
     <div class="content">
         <h1>NeuroGenix</h1>
-        <!-- Dashboard starts empty, content can be added here based on interactions -->
+        <!-- Content will be updated based on selection -->
     </div>
 
     <script>
         function showDashboard() {
-            // Implement the logic to clear the content area and show dashboard specific content
+            updateSelection('Dashboard');
             document.querySelector('.content').innerHTML = '<h1>Welcome to the Dashboard</h1>';
         }
         function selectTable(tableName) {
-            // Implement the logic to show the selected table in the content area
-            // This could involve fetching data via AJAX and rendering it, or simply redirecting
-            document.querySelector('.content').innerHTML = `<h1>Table: ${tableName}</h1>`;
+            updateSelection(tableName);
+            var contentArea = document.querySelector('.content');
+            contentArea.innerHTML = `<h1>${tableName}</h1><div class="table-buttons"><button onclick="insertData('${tableName}')">Insert</button><button onclick="updateData('${tableName}')">Update</button><button onclick="deleteData('${tableName}')">Delete</button></div><div id="table-data"></div>`;
+
+            // Automatically load table data
+            showData(tableName);
+        }
+        
+        function updateSelection(tableName) {
+            var menuItems = document.querySelectorAll('.left-pane .menu-item');
+            menuItems.forEach(item => {
+                if (item.id === tableName || (item.textContent === tableName && tableName === 'Dashboard')) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        function showData(tableName) {
+            fetch(`/show?table=${tableName}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('table-data').innerHTML = html;
+                })
+                .catch(error => console.error('Error loading the table data:', error));
+        }
+
+        function insertData(tableName) {
+            console.log('Insert data for:', tableName);
+        }
+
+        function updateData(tableName) {
+            console.log('Update data for:', tableName);
+        }
+
+        function deleteData(tableName) {
+            console.log('Delete data for:', tableName);
         }
     </script>
 </body>
