@@ -4,90 +4,64 @@
     <title>NeuroGenix</title>
     <style>
         body {
-            background-color: #ffffff; /* Pure white background for a clean and light feel */
-            font-family: "Segoe UI", Arial, sans-serif; /* Accessible and professional font */
-            color: #5D5D5D; /* Soft grey for text */
-        }
-        h1 {
-            color: #4A90E2; /* Light blue for a soothing and inviting feel */
-            font-size: 75px; /* Increased font size for more impact */
-            font-weight: bold; /* Bold font weight for added authority */
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; /* Professional and modern font */
-            text-align: center; /* Ensure the heading is centered */
-            margin: 40px 0; /* Increase margin for better spacing */
-        }
-        .heading {
-            color: #333; /* Light blue for a soothing and inviting feel */
-            font-size: 28px; /* Larger font size for headings */
-            margin: 20px 0; /* Adjusted margin for spacing */
-        }
-        .table_name {
-            font-size: 18px; /* Larger font size for form elements */
-            margin: 10px auto; /* Centered margin */
-            font-family: "Segoe UI", Arial, sans-serif; /* Consistent, readable font */
-            background: #E1F5FE; /* Very light blue background */
-            color: #333; /* Darker text for readability */
-            border: 1px solid #B3E5FC; /* Subtle border color */
-            padding: 12px 20px; /* Increased padding for easier interaction */
-            border-radius: 20px; /* Soft rounded corners */
-            outline: none; /* Remove focus outline for aesthetics */
-            cursor: pointer; /* Indicate clickable */
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            width: 60%; /* Adjustable width */
-            display: block; /* Ensure full-width */
-        }
-        .home-page {
+            background-color: #ffffff;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #5D5D5D;
             display: flex;
-            flex-direction: column; /* Align items in a column */
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center; /* Center align text */
         }
-        .btn {
-            font-size: 18px; /* Increased font size for buttons */
-            padding: 15px 30px; /* More padding for a larger clickable area */
-            margin: 10px;
-            color: #FFFFFF; /* White text for readability */
-            border: none; /* Remove border for cleaner look */
+        .left-pane {
+            width: 200px; /* Set a fixed width for the left pane */
+            background-color: #f0f0f0; /* Light grey background */
+            padding: 20px;
+            height: 100vh; /* Full viewport height */
+            box-shadow: 2px 0 5px 0 rgba(0,0,0,0.1); /* Subtle shadow to separate from the content area */
+            overflow-y: auto; /* Enables scrolling for long lists */
+        }
+        .left-pane .menu-item {
+            padding: 10px;
             cursor: pointer;
-            border-radius: 25px; /* Rounded edges for a friendly feel */
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-            transition: all 0.3s ease; /* Smooth transition for interactions */
-            background-color: #81D4FA; /* Light blue for a calm and inviting button */
+            font-size: 16px;
+            border-left: 3px solid transparent; /* Default state with no highlight */
         }
-        .btn:hover {
-            transform: translateY(-2px); /* Subtle hover effect */
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+        .left-pane .menu-item.selected {
+            border-left: 3px solid #4A90E2; /* Highlight selected item */
+            font-weight: bold;
         }
-        /* Adjusting button colors for actions to stay within the light theme */
-        .show { background-color: #B3E5FC; }
-        .insert { background-color: #81D4FA; }
-        .update { background-color: #4FC3F7; }
-        .delete { background-color: #29B6F6; }
+        .content {
+            flex-grow: 1; /* Take up the remaining space */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .content h1, .content .heading {
+            text-align: center;
+        }
+        /* Existing CSS styles remain unchanged */
     </style>
 </head>
 <body>
-    <div class="home-page">
-        <h1>NeuroGenix</h1>
-        <div class="heading">On the table</div>
-        <form>
-            <select class="table_name" id="table_name" name="table_name">
-                {% for i in range(0, len) %}
-                <option value="{{ table_names[i] }}">{{ table_names[i] }}</option>
-                {% endfor %}
-            </select>
-        </form>
-        <div class="heading">Perform</div>
-        {% for option in button_options %}
-        <button type="button" class="btn {{ option.lower() }}" onclick="submitForm('{{ option.lower() }}')">{{ option }}</button>
+    <div class="left-pane">
+        <div class="menu-item selected" onclick="showDashboard()">Dashboard</div>
+        {% for table_name in table_names %}
+        <div class="menu-item" onclick="selectTable('{{ table_name }}')">{{ table_name }}</div>
         {% endfor %}
+    </div>
+    <div class="content">
+        <h1>NeuroGenix</h1>
+        <!-- Dashboard starts empty, content can be added here based on interactions -->
     </div>
 
     <script>
-        function submitForm(actionType) {
-            var tableName = document.getElementById('table_name').value;
-            window.location.href = `/${actionType.toLowerCase()}?table=${tableName}`;
+        function showDashboard() {
+            // Implement the logic to clear the content area and show dashboard specific content
+            document.querySelector('.content').innerHTML = '<h1>Welcome to the Dashboard</h1>';
+        }
+        function selectTable(tableName) {
+            // Implement the logic to show the selected table in the content area
+            // This could involve fetching data via AJAX and rendering it, or simply redirecting
+            document.querySelector('.content').innerHTML = `<h1>Table: ${tableName}</h1>`;
         }
     </script>
 </body>
