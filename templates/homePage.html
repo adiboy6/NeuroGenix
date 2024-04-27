@@ -11,41 +11,50 @@
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Ensures the header and footer are at top and bottom */
+            width: 100vw; /* Restrict body to viewport width */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+     
+
+        .background-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/neuron1.gif');
+            background-size: cover;
+            background-position: center;
+            z-index: -1; /* Keeps the background behind all content */
         }
 
         header {
-            background-color: #000080;
+            background-color: rgba(0, 0, 128, 0.9); /* Semi-transparent */
             color: #fff;
             padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            width: 100%;
+            z-index: 1; /* Ensures header is above background */
         }
 
         .header-title {
-            font-size: 32px; /* Large font size for the title */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Stylish font-family, you can change it as per your preference */
-        }
-
-        nav {
-            display: flex;
-            align-items: center;
+            font-size: 32px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         nav ul {
             list-style-type: none;
             padding: 0;
             display: flex;
-            margin: 0; /* Remove margin to align navigation to the right */
+            margin: 0;
         }
 
         nav ul li {
-            display: flex;
             margin-right: 20px;
         }
 
         nav ul li:last-child {
-            margin-right: 0; /* Remove the margin for the last item */
+            margin-right: 0;
         }
 
         nav ul li a {
@@ -55,55 +64,83 @@
             align-items: center;
         }
 
-        nav ul li a i {
-            margin-right: 5px;
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1; /* Ensures content is above background */
         }
 
-        nav ul li a:hover {
-            text-decoration: underline;
-        }
-
-        main {
-            /* main content removed as requested */
+        .login-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 300px;
         }
 
         footer {
-            background-color: #000080;
+            background-color: rgba(0, 0, 128, 0.9);
             color: white;
             text-align: center;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
             padding: 10px 0;
+            width: 100%;
+            z-index: 1; /* Ensures footer is above background */
         }
-        /* CSS inside your <style> tag */
-img {
-    display: block; /* Removes any default spacing around the image */
-    width: 100vw; /* Sets the width to 100% of the viewport width */
-    height: 100vh; /* Sets the height to 100% of the viewport height */
-    object-fit: cover; /* Covers the viewport without stretching the image */
+        header {
+    background-color: #000080;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between; /* Ensures space between logo and nav */
+    align-items: center;
+    width: 100%;
 }
 
-        header-title {
-    font-size: 32px; /* Large font size for the title */
-    font-family: 'Montserrat', sans-serif; /* Stylish font-family */
+.header-logo img {
+    height: 80px; /* Adjust based on your logo's size */
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    margin: 0;
+    margin-right: 50px;
+}
+
+nav ul li {
+    display: flex;
+    margin-right: 20px;
+}
+
+nav ul li:last-child {
+    margin-right: 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: white;
     display: flex;
     align-items: center;
 }
 
-header-title i {
-    margin-right: 10px; /* Adjust as needed for icon spacing */
+nav ul li a i {
+    margin-right: 5px;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+nav ul li a:hover {
+    text-decoration: underline;
+}
     </style>
 </head>
 <body>
+    <div class="background-image"></div>
     <header>
-        <div class="header-title">
-        <span><i class="fas fa-dna"></i> Neurogenix</span> <!-- Replace with actual DNA icon -->
-         </div>
+        <div class="header-logo">
+            <img src="/assets/logo.png" alt="Neurogenix Logo" style="height: 50px;"> <!-- Adjust path and size as needed -->
+        </div>
         <nav>
             <ul class="nav-links">
                 <li><a href="#home"><i class="fas fa-home"></i>Home</a></li>
@@ -112,13 +149,48 @@ header-title i {
             </ul>
         </nav>
     </header>
-    <main>
-            <img src= "/NeuroGenix-master/assets/neuron1.gif" alt="A descriptive text about the image">
+    <div class="main-content">
+        <div class="login-container">
+            <form action="#" method="post">
+                <h2>Login</h2>
+                <label for="usertype">User Type</label>
+                <select id="usertype" name="usertype" style="width: 100%; padding: 10px; margin-bottom: 20px;">
+                    <option value="Admin">Admin</option>
+                    <option value="Professor">Professor</option>
+                    <option value="Researcher">Researcher</option>
+                    <option value="Clinician">Clinician</option>
+                </select>
             
- 
-    </main>
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" style="border-radius: 2px;width: 92.5%; padding: 10px; margin-bottom: 20px; display: block; border-width: 1px;">
+            
+                <label for="password">Password</label>
+                <div class="password-container" style="position: relative;">
+                    <input type="password" id="password" name="password" style="border-radius: 2px; width: 80%; padding: 10px; margin-bottom: 20px; display: block;border-width: 1px;">
+                    <i class="fas fa-eye-slash toggle-password" onclick="togglePasswordVisibility();" style="position: absolute; right: 10px; top: 10px; cursor: pointer;"></i>
+                </div>
+
+                <input type="submit" value="SUBMIT" style="width: 100%; padding: 10px; background-color: #000080; color: white; border: none; cursor: pointer; border-radius: 15px;">
+            </form>
+              <script>
+        function togglePasswordVisibility() {
+            var passwordInput = document.getElementById('password');
+            var toggleIcon = document.querySelector('.toggle-password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.add('fa-eye-slash');
+                toggleIcon.classList.remove('fa-eye');
+            }
+        }
+    </script>
+        </div>
+    </div>
     <footer>
-        <p>Copyright © 2024. All rights reserved.</p>
+        <p>Copyright © 2024 All rights reserved.</p>
     </footer>
 </body>
 </html>
