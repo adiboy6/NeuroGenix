@@ -1,0 +1,11 @@
+{
+    "patient": "Patient Information",
+    "genomicdata": "Genomic Data",
+    "imagingdata": "Imaging Data",
+    "healthrecords": "Health Records",
+    "demographics": "Demographic Information",
+    "researchinstitution": "Research Institution Data",
+    "users": "User Accounts",
+    "securitylogs": "Security Logs"
+  }
+  
