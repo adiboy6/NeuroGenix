@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from faker import Faker
 from datetime import date
 from tqdm import tqdm
+import json
 from flask import Flask, render_template, request, redirect, jsonify, url_for, jsonify
 
 
@@ -44,7 +45,11 @@ def get_table_names_labels():
     return jsonify(f.read())
 
 @app.route('/getTableSchema', methods=['GET'])
-def get_table_schema(table_name):
+def get_table_schema(tname=None):
+    if tname == None:
+        table_name = request.args.get('tableName')
+    else:
+        table_name = tname
     conn = get_db_connection()
     cursor = conn.cursor()
     query = f"""SELECT column_name
@@ -53,13 +58,16 @@ def get_table_schema(table_name):
     """
     cursor.execute(query)
     schema = cursor.fetchall()
-    cursor.close()
-    return schema
-
-@app.route('/getTableSchemaLabels', methods=['GET'])
-def get_table_schema_labels():
     f = open('table_schema.json', 'r')
-    return jsonify(f.read())
+    tableSchemaJson = json.load(f)
+    schema_label = dict()
+    for i in schema:
+        key = i[0]
+        schema_label[key]= tableSchemaJson[key]
+    cursor.close()
+    if tname == None:
+        return jsonify(schema_label)
+    return schema_label
 
 def get_primary_key_and_values(table_name):
     conn = get_db_connection()
@@ -243,37 +251,34 @@ def update():
         conn.close()
         return render_template('update.html', schema=schema, table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
 
-@app.route('/insert', methods=['GET', 'POST'])
+@app.route('/insert', methods=['POST'])
 def insert():
     table_name = request.args.get('table')
     if table_name:
         schema = get_table_schema(table_name)
-        if request.method == 'POST':
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
             # Construct the INSERT INTO query dynamically
-            columns = ', '.join([col[0] for col in schema])  # col[0] is the column name in the schema
+            columns = ', '.join([col for col in schema])  # col[0] is the column name in the schema
             placeholders = ', '.join(['%s' for _ in schema])
-            values = [request.form[col[0]] for col in schema]
+            values = [request.form[col] for col in schema]
             query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-            try:
-                conn = get_db_connection()
-                conn.execute(query, values)
-                conn.commit()
-                conn.close()
-                return f"Record inserted into {table_name} successfully."
-            except psycopg2.Error as e:
-                return f"Error inserting into {table_name}: {e}"
-        else:
-            special_fields = {
-                'Gender': ['Male', 'Female', 'Other'],
-                'Password' : None,
-                'DOB': None,
-                'DataOfEntry': None
-                # Other special fields can be added here
-            }
-            # GET request, show the form
-            return render_template('insert.html', schema=schema, table_name=table_name, special_fields=special_fields)
+            
+            cursor.execute(query, values)
+            conn.commit()
+            
+            cursor.close()
+            conn.close()
+            
+            return jsonify({"success": True, "message": f"Record inserted into {table_name} successfully."})
+        except psycopg2.Error as e:
+            return jsonify({"success": False, "message": f"Error inserting into {table_name}: {e}"})
+    
     else:
-        return "No table specified"
+        return jsonify({"success": False, "message": "No table specified"})
+
 
 @app.route('/delete', methods=['GET', 'POST'])
 def delete():

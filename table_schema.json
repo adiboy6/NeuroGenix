@@ -1,44 +1,171 @@
 {
-  "actionperformed": "Action Performed",
-  "address": "Address",
-  "allergies": "Allergies",
-  "contactperson": "Contact Person",
-  "dataofentry": "Date of Entry",
-  "demographicsid": "Demographics ID",
-  "diagnosis": "Diagnosis",
-  "dnasequence": "DNA Sequence",
-  "dob": "Date of Birth",
-  "educationlevel": "Education Level",
-  "email": "Email",
-  "ethnicity": "Ethnicity",
-  "fname": "First Name",
-  "gender": "Gender",
-  "geneexpression": "Gene Expression",
-  "geneticmarkers": "Genetic Markers",
-  "genomicid": "Genomic ID",
-  "imagefile": "Image File",
-  "imageid": "Image ID",
-  "institutionid": "Institution ID",
-  "institutionname": "Institution Name",
-  "ipaddress": "IP Address",
-  "lname": "Last Name",
-  "location": "Location",
-  "logdatetime": "Log Date Time",
-  "logid": "Log ID",
-  "machinetype": "Machine Type",
-  "maritalstatus": "Marital Status",
-  "medications": "Medications",
-  "modalityname": "Modality Name",
-  "occupation": "Occupation",
-  "password": "Password",
-  "patientid": "Patient ID",
-  "phno": "Phone Number",
-  "phonenumber": "Phone Number",
-  "recordid": "Record ID",
-  "results": "Results",
-  "technician": "Technician",
-  "userid": "User ID",
-  "username": "Username",
-  "usertype": "User Type",
-  "vitalsigns": "Vital Signs"
+  "actionperformed": {
+    "labelName": "Action Performed",
+    "inputType": "text"
+  },
+  "address": {
+    "labelName": "Address",
+    "inputType": "text"
+  },
+  "allergies": {
+    "labelName": "Allergies",
+    "inputType": "text"
+  },
+  "contactperson": {
+    "labelName": "Contact Person",
+    "inputType": "text"
+  },
+  "dataofentry": {
+    "labelName": "Date of Entry",
+    "inputType": "date"
+  },
+  "demographicsid": {
+    "labelName": "Demographics ID",
+    "inputType": "text"
+  },
+  "diagnosis": {
+    "labelName": "Diagnosis",
+    "inputType": "text"
+  },
+  "dnasequence": {
+    "labelName": "DNA Sequence",
+    "inputType": "text"
+  },
+  "dob": {
+    "labelName": "Date of Birth",
+    "inputType": "date"
+  },
+  "educationlevel": {
+    "labelName": "Education Level",
+    "inputType": "text"
+  },
+  "email": {
+    "labelName": "Email",
+    "inputType": "email"
+  },
+  "ethnicity": {
+    "labelName": "Ethnicity",
+    "inputType": "text"
+  },
+  "fname": {
+    "labelName": "First Name",
+    "inputType": "text"
+  },
+  "gender": {
+    "labelName": "Gender",
+    "inputType": "radio",
+    "options": ["Male", "Female", "Other"]
+  },
+  "geneexpression": {
+    "labelName": "Gene Expression",
+    "inputType": "text"
+  },
+  "geneticmarkers": {
+    "labelName": "Genetic Markers",
+    "inputType": "text"
+  },
+  "genomicid": {
+    "labelName": "Genomic ID",
+    "inputType": "text"
+  },
+  "imagefile": {
+    "labelName": "Image File",
+    "inputType": "text"
+  },
+  "imageid": {
+    "labelName": "Image ID",
+    "inputType": "text"
+  },
+  "institutionid": {
+    "labelName": "Institution ID",
+    "inputType": "text"
+  },
+  "institutionname": {
+    "labelName": "Institution Name",
+    "inputType": "text"
+  },
+  "ipaddress": {
+    "labelName": "IP Address",
+    "inputType": "text"
+  },
+  "lname": {
+    "labelName": "Last Name",
+    "inputType": "text"
+  },
+  "location": {
+    "labelName": "Location",
+    "inputType": "text"
+  },
+  "logdatetime": {
+    "labelName": "Log Date Time",
+    "inputType": "datetime-local"
+  },
+  "logid": {
+    "labelName": "Log ID",
+    "inputType": "text"
+  },
+  "machinetype": {
+    "labelName": "Machine Type",
+    "inputType": "text"
+  },
+  "maritalstatus": {
+    "inputType": "radio",
+    "options": ["Single", "Married", "Divorced"]
+  },
+  "medications": {
+    "labelName": "Medications",
+    "inputType": "text"
+  },
+  "modalityname": {
+    "labelName": "Modality Name",
+    "inputType": "text"
+  },
+  "occupation": {
+    "labelName": "Occupation",
+    "inputType": "text"
+  },
+  "password": {
+    "labelName": "Password",
+    "inputType": "password"
+  },
+  "patientid": {
+    "labelName": "Patient ID",
+    "inputType": "text"
+  },
+  "phno": {
+    "labelName": "Phone Number",
+    "inputType": "text"
+  },
+  "phonenumber": {
+    "labelName": "Phone Number",
+    "inputType": "text"
+  },
+  "recordid": {
+    "labelName": "Record ID",
+    "inputType": "text"
+  },
+  "results": {
+    "labelName": "Results",
+    "inputType": "text"
+  },
+  "technician": {
+    "labelName": "Technician",
+    "inputType": "text"
+  },
+  "userid": {
+    "labelName": "User ID",
+    "inputType": "text"
+  },
+  "username": {
+    "labelName": "Username",
+    "inputType": "text"
+  },
+  "usertype": {
+    "labelName": "User Type",
+    "inputType": "text"
+  },
+  "vitalsigns": {
+    "labelName": "Vital Signs",
+    "inputType": "text"
+  }
 }

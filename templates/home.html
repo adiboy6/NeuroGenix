@@ -137,10 +137,9 @@
 
         function showData(tableName) {
             // Fetch the schema labels
-            fetch('/getTableSchemaLabels')
+            fetch(`/getTableSchema?tableName=${tableName}`)
                 .then(response => response.json())
-                .then(schemaLabelsRaw => {
-                    const schemaLabels = JSON.parse(schemaLabelsRaw);
+                .then(schemaLabels => {
                     // Fetch table data
                     fetch(`/getTableData?table=${tableName}`)
                         .then(response => response.json())
@@ -160,7 +159,7 @@
                                 if (data[0].hasOwnProperty(key)) {
                                     const th = document.createElement('th');
                                     // Use human-readable label if available, otherwise use key
-                                    th.textContent = schemaLabels[key] || key;
+                                    th.textContent = schemaLabels[key]['labelName'] || key;
                                     headerRow.appendChild(th);
                                 }
                             }
@@ -187,16 +186,73 @@
                 .catch(error => console.error('Error loading the schema labels:', error));
         }
         
-        
-
         function insertData(tableName) {
-            fetch(`/insert?table=${tableName}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('table-data').innerHTML = html;
+            fetch(`/getTableSchema?tableName=${tableName}`)
+                .then(response => response.json())
+                .then(schema => {
+                    const form = document.createElement('form');
+                    form.setAttribute('method', 'post');
+                    form.setAttribute('action', `/insert?table=${tableName}`);
+        
+                    for (const fieldName in schema) {
+                        const fieldInfo = schema[fieldName];
+        
+                        const label = document.createElement('label');
+                        label.textContent = fieldInfo.labelName + ': ';
+        
+                        const input = document.createElement('input');
+                        input.setAttribute('name', fieldName);
+        
+                        if (fieldInfo.inputType === 'radio') {
+                            fieldInfo.options.forEach(option => {
+                                const radioInput = document.createElement('input');
+                                radioInput.setAttribute('type', 'radio');
+                                radioInput.setAttribute('name', fieldName);
+                                radioInput.setAttribute('value', option);
+                                const radioLabel = document.createElement('label');
+                                radioLabel.textContent = option;
+                                form.appendChild(radioInput);
+                                form.appendChild(radioLabel);
+                            });
+                        } else {
+                            input.setAttribute('type', fieldInfo.inputType);
+                            if (fieldInfo.inputType === 'date' || fieldInfo.inputType === 'datetime-local' || fieldInfo.inputType === 'email' || fieldInfo.inputType === 'password' || fieldInfo.inputType === 'text') {
+                                form.appendChild(label);
+                            }
+                            form.appendChild(input);
+                        }
+        
+                        form.appendChild(document.createElement('br'));
+                    }
+        
+                    const submitButton = document.createElement('input');
+                    submitButton.setAttribute('type', 'submit');
+                    submitButton.setAttribute('value', 'Submit');
+        
+                    form.appendChild(submitButton);
+        
+                    document.getElementById('table-data').innerHTML = '';
+                    document.getElementById('table-data').appendChild(form);
                 })
-                .catch(error => console.error('Error loading the table data:', error));
+                .catch(error => console.error('Error loading the table schema:', error));
         }
+        
+        // Add an event listener to handle form submission and show alert
+        document.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const form = event.target;
+            fetch(form.action, {
+                method: form.method,
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show alert with success or failure message
+                console.log(data.message); // Log the message to console
+            })
+            .catch(error => console.error('Error inserting data:', error));
+        });
+        
 
         function updateData(tableName) {
             fetch(`/update?table=${tableName}`)
