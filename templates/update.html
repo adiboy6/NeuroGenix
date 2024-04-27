@@ -3,57 +3,21 @@
 <head>
     <title>Update Page</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f9f9;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        div {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #666;
-        }
-        input[type="text"], select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
+        body {font-family: Arial, sans-serif; margin: 20px; background-color: #f4f9f9;}
+        h1 {text-align: center; color: #333;}
+        form {max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        div {margin-bottom: 15px;}
+        label {display: block; margin-bottom: 5px; color: #666;}
+        input[type="text"], select {width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;}
+        button {display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;}
+        button:hover {background-color: #45a049;}
     </style>
 </head>
 <body>
     <h1>Update Record in {{ table_name }}</h1>
     <form method="POST">
         <div>
-            <label for="primary_key">Select {{primary_key_name}}:</label>
+            <label for="primary_key">Select {{ primary_key_name }}:</label>
             <select id="primary_key" name="primary_key">
                 {% for pk in primary_keys %}
                 <option value="{{ pk[primary_key_name] }}">{{ pk[primary_key_name] }}</option>
@@ -61,10 +25,10 @@
             </select>
         </div>
         {% for col in schema %}
-            {% if loop.index > 1 %} <!-- Assuming first column is the primary key -->
+            {% if col[0] != primary_key_name %} <!-- Do not display input for primary key -->
             <div>
-                <label for="{{ col[1] }}">{{ col[1] }}</label>
-                <input type="text" id="{{ col[1] }}" name="{{ col[1] }}" />
+                <label for="{{ col[0] }}">{{ col[0] }}</label>
+                <input type="text" id="{{ col[0] }}" name="{{ col[0] }}" />
             </div>
             {% endif %}
         {% endfor %}
@@ -99,6 +63,5 @@
             }
         }
     </script>
-    
 </body>
 </html>

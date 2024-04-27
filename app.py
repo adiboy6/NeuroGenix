@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2 import extras
 from psycopg.rows import namedtuple_row, dict_row
+from psycopg2.extras import NamedTupleCursor, DictCursor
 from urllib.parse import urlparse
 from faker import Faker
 from datetime import date
@@ -77,7 +78,7 @@ def get_row():
     primary_key_name = schema[0][0]  # Adjusted to match PostgreSQL's output
     
     conn = get_db_connection()
-    curr = conn.cursor(row_factory=namedtuple_row)
+    curr = conn.cursor(cursor_factory=NamedTupleCursor)
     query = f"SELECT * FROM {table_name} WHERE {primary_key_name} = %s"
     row = curr.execute(query, (primary_key,)).fetchone()
     conn.close()
@@ -150,10 +151,12 @@ def show():
     table_name = request.args.get('table')
     if table_name:
         conn = get_db_connection()
-        conn.row_factory = namedtuple_row
+        curr = conn.cursor(cursor_factory=DictCursor)  # Set cursor to return dictionary
         query = f"SELECT * FROM {table_name}"
+        print(query)
         try:
-            data = conn.execute(query).fetchall()
+            curr.execute(query)
+            data = curr.fetchall()
         except psycopg2.Error as e:
             data = []
             print(f"Error fetching data from {table_name}: {e}")
@@ -172,19 +175,20 @@ def update():
         schema = get_table_schema(table_name)
         primary_key_name = schema[0][0]
         # Handle form submission for updating the record
-        # Fetch the primary key and updated values from the form
         primary_key = request.form['primary_key']
-        updated_values = {col[0]: request.form[col[0]] for col in schema if col[0] != 'primary_key'}
-        
+        updated_values = {col[0]: request.form[col[0]] for col in schema if col[0] != primary_key_name}
+
         # Construct the UPDATE query dynamically
         set_clause = ', '.join([f"{col} = %s" for col in updated_values])
         query = f"UPDATE {table_name} SET {set_clause} WHERE {primary_key_name} = %s"
-        
+        values = list(updated_values.values()) + [primary_key]
+
         try:
             conn = get_db_connection()
-            conn.execute(query, list(updated_values.values()) + [primary_key])
+            cursor = conn.cursor()
+            cursor.execute(query, values)
             conn.commit()
-            conn.close()
+            cursor.close()
             return f"Record in {table_name} updated successfully."
         except psycopg2.Error as e:
             return f"Error updating {table_name}: {e}"
@@ -194,10 +198,11 @@ def update():
         primary_key_name = schema[0][0]  # Assuming first column is the primary key
         # Fetch primary key values for the dropdown
         conn = get_db_connection()
-        conn.row_factory = namedtuple_row
-        primary_keys = conn.execute(f"SELECT {primary_key_name} FROM {table_name}").fetchall()
+        cursor = conn.cursor(cursor_factory=DictCursor)
+        cursor.execute(f"SELECT {primary_key_name} FROM {table_name}")
+        primary_keys = cursor.fetchall()
+        cursor.close()
         conn.close()
-        
         return render_template('update.html', schema=schema, table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
 
 @app.route('/insert', methods=['GET', 'POST'])
@@ -235,33 +240,34 @@ def insert():
 @app.route('/delete', methods=['GET', 'POST'])
 def delete():
     table_name = request.args.get('table')
+    schema = get_table_schema(table_name)
+    primary_key_name = schema[0][0]  # Assuming first column is the primary key
     if not table_name:
         return "No table specified"
 
     if request.method == 'POST':
         primary_key = request.form['primary_key']
-        schema = get_table_schema(table_name)
-        primary_key_name = schema[0][0]  # Assuming first column is the primary key
         
         try:
             conn = get_db_connection()
+            cursor = conn.cursor()
             query = f"DELETE FROM {table_name} WHERE {primary_key_name} = %s"
-            conn.execute(query, (primary_key,))
+            cursor.execute(query, (primary_key,))
             conn.commit()
+            cursor.close()
             conn.close()
-            # Redirect or inform the user of successful deletion
             return f"Record in {table_name} deleted successfully."
         except psycopg2.Error as e:
             return f"Error deleting {table_name}: {e}"
     else:
         # For GET request, display the delete form
         conn = get_db_connection()
-        schema = get_table_schema(table_name)
-        primary_key_name = schema[0][0]  # Assuming first column is the primary key
-        conn.row_factory = namedtuple_row
-        primary_keys = conn.execute(f"SELECT {primary_key_name} FROM {table_name}").fetchall()
+        cursor = conn.cursor(cursor_factory=DictCursor)
+        cursor.execute(f"SELECT {primary_key_name} FROM {table_name}")
+        primary_keys = cursor.fetchall()
+        cursor.close()
         conn.close()
-        return render_template('delete.html', table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
+        return render_template('delete.html', table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)  
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
