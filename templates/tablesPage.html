@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurogenix</title>
+    <!-- Include the Font Awesome library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Ensures the header and footer are at top and bottom */
+            width: 100vw; /* Restrict body to viewport width */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+        header {
+            background-color: #000080;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between; /* Ensures space between logo and nav */
+            align-items: center;
+            width: 100%;
+        }
+        .header-logo img {
+            height: 50px; /* Adjust based on your logo's size */
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            margin: 0;
+            margin-right: 50px; /* Slight adjustment to the left */
+        }
+        nav ul li {
+            display: flex;
+            margin-right: 20px;
+        }
+        nav ul li:last-child {
+            margin-right: 0;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        .main-content {
+            display: flex;
+            flex-grow: 1;
+        }
+        .sidebar {
+            width: 15%;
+            background-color: navy;
+            color: white;
+            padding: 20px;
+            
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar li {
+    margin-bottom: 10px; /* Adds 10px space below each list item */
+}
+
+        .sidebar li a {
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar li a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Ensures the header and footer are at top and bottom */
+            width: 100vw; /* Restrict body to viewport width */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+
+        .background-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/neuron1.gif');
+            background-size: cover;
+            background-position: center;
+            z-index: -1; /* Keeps the background behind all content */
+        }
+
+        header {
+            background-color: rgba(0, 0, 128, 0.9); /* Semi-transparent */
+            color: #fff;
+            padding: 10px 20px;
+            width: 100%;
+            z-index: 1; /* Ensures header is above background */
+        }
+
+        .header-title {
+            font-size: 32px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <header>
+        <div class="header-logo">
+            <img src="/assets/logo.png" alt="Neurogenix Logo"> <!-- Adjust path and size as needed -->
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#login"><i class="fas fa-sign-in-alt"></i>Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="sidebar">
+                <ul id="table_name" name="table_name">
+                    {% for table_name in table_names %}
+                    <li><a href="#{{ table_name }}">{{ table_name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="content">
+            <!-- Content goes here -->
+        </div>
+    </div>
+   
+    <script>
+        function submitForm(actionType) {
+            var tableName = document.getElementById('table_name').value;
+            window.location.href = `/${actionType.toLowerCase()}?table=${tableName}`;
+        }
+    </script>
+</body>
+</html>
