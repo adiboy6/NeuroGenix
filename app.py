@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from faker import Faker
 from datetime import date
 from tqdm import tqdm
-from flask import Flask, render_template, request, redirect, jsonify, url_for
+from flask import Flask, render_template, request, redirect, jsonify, url_for, jsonify
 
 
 app = Flask(__name__)
@@ -29,15 +29,22 @@ def get_db_connection():
     )
     return connection;
 
-def get_table_names():
+@app.route('/tableNames', methods=['GET'])
+def table_names():
     conn = get_db_connection()
     conn = conn.cursor()
     conn.execute("""SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';""")
     tables_names = [i[0] for i in conn.fetchall()]
     conn.close()
-    return tables_names
+    return jsonify(tables_names)
 
-def get_table_schema(table_name):
+@app.route('/tableNamesLabels', methods=['GET'])
+def table_names_labels():
+    f = open('table_names.json', 'r')
+    return jsonify(f.read())
+
+@app.route('/tableSchema', methods=['GET'])
+def table_schema(table_name):
     conn = get_db_connection()
     cursor = conn.cursor()
     query = f"""SELECT column_name
@@ -48,6 +55,11 @@ def get_table_schema(table_name):
     schema = cursor.fetchall()
     cursor.close()
     return schema
+
+@app.route('/tableSchemaLabels', methods=['GET'])
+def table_schema_labels():
+    f = open('table_schema.json', 'r')
+    return jsonify(f.read())
 
 def get_primary_key_and_values(table_name):
     conn = get_db_connection()
@@ -67,14 +79,14 @@ def get_primary_key_and_values(table_name):
     cursor.close()
     return primary_key_name, primary_key_values
 
-@app.route('/get-row', methods=['GET'])
+@app.route('/rowData', methods=['GET'])
 def get_row():
     table_name = request.args.get('table')
     primary_key = request.args.get('primary_key')
     if not table_name or not primary_key:
         return jsonify({"error": "Missing table name or primary key"}), 400
     
-    schema = get_table_schema(table_name)
+    schema = table_schema(table_name)
     primary_key_name = schema[0][0]  # Adjusted to match PostgreSQL's output
     
     conn = get_db_connection()
@@ -112,7 +124,6 @@ def authenticate(username, password, usertype):
     try:
         curr.execute(query)
         data = curr.fetchone()
-        print(data)
         if data is None:
             raise psycopg2.Error
         return True
@@ -124,15 +135,14 @@ def authenticate(username, password, usertype):
 @app.route('/home')
 def home():
     usertype = request.args.get('usertype')
-    table_names = get_table_names()
     button_options = ['Show', 'Insert', 'Update', 'Delete']
     if usertype=='Admin':
-        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
+        # return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
+        return render_template('home.html')
     elif usertype=='Professor':
         button_options.remove('Insert')
         return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
     elif usertype=='Guest':
-        print(table_names)
         table_names.remove('researchinstitution')
         table_names.remove('users')
         table_names.remove('securitylogs')
@@ -152,8 +162,7 @@ def show():
     if table_name:
         conn = get_db_connection()
         curr = conn.cursor(cursor_factory=DictCursor)  # Set cursor to return dictionary
-        query = f"SELECT * FROM {table_name}"
-        print(query)
+        query = f"SELECT * FROM {table_name} LIMIT 100"
         try:
             curr.execute(query)
             data = curr.fetchall()
@@ -172,7 +181,7 @@ def update():
         return "No table specified"
 
     if request.method == 'POST':
-        schema = get_table_schema(table_name)
+        schema = table_schema(table_name)
         primary_key_name = schema[0][0]
         # Handle form submission for updating the record
         primary_key = request.form['primary_key']
@@ -194,7 +203,7 @@ def update():
             return f"Error updating {table_name}: {e}"
     else:
         # For GET request, display the update form
-        schema = get_table_schema(table_name)
+        schema = table_schema(table_name)
         primary_key_name = schema[0][0]  # Assuming first column is the primary key
         # Fetch primary key values for the dropdown
         conn = get_db_connection()
@@ -209,7 +218,7 @@ def update():
 def insert():
     table_name = request.args.get('table')
     if table_name:
-        schema = get_table_schema(table_name)
+        schema = table_schema(table_name)
         if request.method == 'POST':
             # Construct the INSERT INTO query dynamically
             columns = ', '.join([col[0] for col in schema])  # col[0] is the column name in the schema
@@ -240,7 +249,7 @@ def insert():
 @app.route('/delete', methods=['GET', 'POST'])
 def delete():
     table_name = request.args.get('table')
-    schema = get_table_schema(table_name)
+    schema = table_schema(table_name)
     primary_key_name = schema[0][0]  # Assuming first column is the primary key
     if not table_name:
         return "No table specified"
