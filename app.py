@@ -7,6 +7,7 @@ from faker import Faker
 from datetime import date
 from tqdm import tqdm
 import json
+from collections import OrderedDict
 from flask import Flask, render_template, request, redirect, jsonify, url_for, jsonify
 
 
@@ -45,7 +46,7 @@ def get_table_names_labels():
     return jsonify(f.read())
 
 @app.route('/getTableSchema', methods=['GET'])
-def get_table_schema(tname=None):
+def get_table_schema(tname=None, label=True):
     if tname == None:
         table_name = request.args.get('tableName')
     else:
@@ -58,54 +59,53 @@ def get_table_schema(tname=None):
     """
     cursor.execute(query)
     schema = cursor.fetchall()
+    if not label : return schema
     f = open('table_schema.json', 'r')
     tableSchemaJson = json.load(f)
-    schema_label = dict()
+    schema_label = OrderedDict()
     for i in schema:
         key = i[0]
         schema_label[key]= tableSchemaJson[key]
     cursor.close()
     if tname == None:
-        return jsonify(schema_label)
+        return json.dumps(schema_label)
     return schema_label
-
-def get_primary_key_and_values(table_name):
+    
+@app.route('/getPrimaryKeyValues', methods=['GET'])
+def get_primary_key_and_values():
+    table_name = request.args.get('tableName')
+    primary_key = request.args.get('primaryKey')
     conn = get_db_connection()
     cursor = conn.cursor()
     # Retrieve the primary key column name using information_schema
-    primary_key_query = f"""SELECT column_name
-                              FROM information_schema.key_column_usage
-                              WHERE table_name = '{table_name}'"""
-    cursor.execute(primary_key_query)
-    primary_key_name = cursor.fetchone()[0]
     
     # Retrieve primary key values from the table
-    values_query = f"SELECT {primary_key_name} FROM {table_name}"
+    values_query = f"SELECT {primary_key} FROM {table_name}"
     cursor.execute(values_query)
     primary_key_values = [row[0] for row in cursor.fetchall()]
 
     cursor.close()
-    return primary_key_name, primary_key_values
+    return json.dumps(primary_key_values)
 
-@app.route('/rowData', methods=['GET'])
+@app.route('/getRowData', methods=['GET'])
 def get_row():
     table_name = request.args.get('table')
     primary_key = request.args.get('primary_key')
     if not table_name or not primary_key:
         return jsonify({"error": "Missing table name or primary key"}), 400
     
-    schema = get_table_schema(table_name)
+    schema = get_table_schema(table_name, label=False)
     primary_key_name = schema[0][0]  # Adjusted to match PostgreSQL's output
-    
     conn = get_db_connection()
-    curr = conn.cursor(cursor_factory=NamedTupleCursor)
+    curr = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     query = f"SELECT * FROM {table_name} WHERE {primary_key_name} = %s"
-    row = curr.execute(query, (primary_key,)).fetchone()
+    curr.execute(query, (primary_key,))
+    row = curr.fetchone()
     conn.close()
     
     if row:
         # Convert the row into a dict to jsonify it
-        return jsonify(dict(row))
+        return row
     else:
         return jsonify({"error": "Row not found"}), 404
 
@@ -163,25 +163,6 @@ def home():
     else:
         return redirect('/')
 
-
-@app.route('/show')
-def show():
-    table_name = request.args.get('table')
-    if table_name:
-        conn = get_db_connection()
-        curr = conn.cursor(cursor_factory=DictCursor)  # Set cursor to return dictionary
-        query = f"SELECT * FROM {table_name} LIMIT 100"
-        try:
-            curr.execute(query)
-            data = curr.fetchall()
-        except psycopg2.Error as e:
-            data = []
-            print(f"Error fetching data from {table_name}: {e}")
-        conn.close()
-    else:
-        data = []
-    return render_template('show.html', data=data, table_name=table_name)
-
 @app.route('/getTableData', methods=['GET'])
 def get_table_data():
     table_name = request.args.get('table')
@@ -218,7 +199,7 @@ def update():
         return "No table specified"
 
     if request.method == 'POST':
-        schema = get_table_schema(table_name)
+        schema = get_table_schema(table_name, label=False)
         primary_key_name = schema[0][0]
         # Handle form submission for updating the record
         primary_key = request.form['primary_key']
@@ -240,7 +221,7 @@ def update():
             return f"Error updating {table_name}: {e}"
     else:
         # For GET request, display the update form
-        schema = get_table_schema(table_name)
+        schema = get_table_schema(table_name, label=False)
         primary_key_name = schema[0][0]  # Assuming first column is the primary key
         # Fetch primary key values for the dropdown
         conn = get_db_connection()
@@ -251,7 +232,7 @@ def update():
         conn.close()
         return render_template('update.html', schema=schema, table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
 
-@app.route('/insert', methods=['POST'])
+@app.route('/postData', methods=['POST'])
 def insert():
     table_name = request.args.get('table')
     if table_name:

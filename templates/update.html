@@ -45,7 +45,7 @@
     
             const table = '{{ table_name }}';
             try {
-                const response = await fetch(`/get-row?table=${table}&primary_key=${primaryKey}`);
+                const response = await fetch(`/getRowData?table=${table}&primary_key=${primaryKey}`);
                 const data = await response.json();
                 if (response.ok) {
                     Object.keys(data).forEach(key => {

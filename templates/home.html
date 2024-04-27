@@ -114,7 +114,7 @@
             var contentArea = document.querySelector('.content');
             contentArea.innerHTML = `<h1>${tableName}</h1>
                 <div class="table-buttons">
-                    <button onclick="insertData('${tableName}')">Insert</button>
+                    <button onclick="addData('${tableName}')">Add</button>
                     <button onclick="updateData('${tableName}')">Update</button>
                     <button onclick="deleteData('${tableName}')">Delete</button>
                 </div>
@@ -186,13 +186,13 @@
                 .catch(error => console.error('Error loading the schema labels:', error));
         }
         
-        function insertData(tableName) {
+        function addData(tableName) {
             fetch(`/getTableSchema?tableName=${tableName}`)
                 .then(response => response.json())
                 .then(schema => {
                     const form = document.createElement('form');
                     form.setAttribute('method', 'post');
-                    form.setAttribute('action', `/insert?table=${tableName}`);
+                    form.setAttribute('action', `/postData?table=${tableName}`);
         
                     for (const fieldName in schema) {
                         const fieldInfo = schema[fieldName];
@@ -250,19 +250,111 @@
                 alert(data.message); // Show alert with success or failure message
                 console.log(data.message); // Log the message to console
             })
-            .catch(error => console.error('Error inserting data:', error));
+            .catch(error => console.error('Error adding data:', error));
         });
         
-
         function updateData(tableName) {
-            fetch(`/update?table=${tableName}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('table-data').innerHTML = html;
+            fetch(`/getTableSchema?tableName=${tableName}`)
+                .then(response => response.json())
+                .then(schema => {
+                    const firstKey = Object.keys(schema)[0];
+                    const firstValue = schema[firstKey];
+                    
+                    const form = document.createElement('form');
+                    form.setAttribute('method', 'post');
+                    form.setAttribute('action', `/update?table=${tableName}`);
+            
+                    // Create dropdown for selecting primary key
+                    const primaryKeySelect = document.createElement('select');
+                    primaryKeySelect.setAttribute('id', 'primary_key');
+                    primaryKeySelect.setAttribute('name', 'primary_key');
+                    form.appendChild(primaryKeySelect);
+            
+                    // Populate dropdown options with primary keys
+                    fetch(`/getPrimaryKeyValues?tableName=${tableName}&primaryKey=${firstKey}`)
+                        .then(response => response.json())
+                        .then(primaryKeys => {
+                            primaryKeys.forEach(key => {
+                                const option = document.createElement('option');
+                                option.setAttribute('value', key);
+                                option.textContent = key;
+                                primaryKeySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading primary key values:', error));
+            
+                    // Event listener to fetch row data on dropdown change
+                    primaryKeySelect.addEventListener('change', async function() {
+                        const selectedPrimaryKey = this.value;
+                        console.log(this.value)
+                        try {
+                            const response = await fetch(`/getRowData?table=${tableName}&primary_key=${selectedPrimaryKey}`);
+                            const rowData = await response.json();
+                            console.log(rowData)
+                            if (response.ok) {
+                                // Fill form fields with row data
+                                for (const fieldName in schema) {
+                                    const fieldInfo = schema[fieldName];
+                                    const input = document.querySelector(`[name="${fieldName}"]`);
+                                    if (input) {
+                                        input.value = rowData[fieldName] || '';
+                                    }
+                                }
+                            } else {
+                                alert('Failed to fetch row data: ' + rowData.error);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Failed to fetch row data');
+                        }
+                    });
+            
+                    // Append other fields based on schema
+                    for (const fieldName in schema) {
+                        if (fieldName !== firstKey) {
+                            const fieldInfo = schema[fieldName];
+            
+                            const label = document.createElement('label');
+                            label.textContent = fieldInfo.labelName + ': ';
+            
+                            const input = document.createElement('input');
+                            input.setAttribute('name', fieldName);
+            
+                            if (fieldInfo.inputType === 'radio') {
+                                fieldInfo.options.forEach(option => {
+                                    const radioInput = document.createElement('input');
+                                    radioInput.setAttribute('type', 'radio');
+                                    radioInput.setAttribute('name', fieldName);
+                                    radioInput.setAttribute('value', option);
+                                    const radioLabel = document.createElement('label');
+                                    radioLabel.textContent = option;
+                                    form.appendChild(radioInput);
+                                    form.appendChild(radioLabel);
+                                });
+                            } else {
+                                input.setAttribute('type', fieldInfo.inputType);
+                                if (fieldInfo.inputType === 'date' || fieldInfo.inputType === 'datetime-local' || fieldInfo.inputType === 'email' || fieldInfo.inputType === 'password' || fieldInfo.inputType === 'text') {
+                                    form.appendChild(label);
+                                }
+                                form.appendChild(input);
+                            }
+            
+                            form.appendChild(document.createElement('br'));
+                        }
+                    }
+            
+                    const submitButton = document.createElement('input');
+                    submitButton.setAttribute('type', 'submit');
+                    submitButton.setAttribute('value', 'Update');
+            
+                    form.appendChild(submitButton);
+            
+                    document.getElementById('table-data').innerHTML = '';
+                    document.getElementById('table-data').appendChild(form);
                 })
-                .catch(error => console.error('Error loading the table data:', error));
+                .catch(error => console.error('Error loading the table schema:', error));
         }
-
+        
         function deleteData(tableName) {
             fetch(`/delete?table=${tableName}`)
                 .then(response => response.text())
