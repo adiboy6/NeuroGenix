@@ -79,7 +79,7 @@
 
     <script>
         function fetchAndCreateMenu() {
-            fetch('/tableNamesLabels')
+            fetch('/getTableNamesLabels')
             .then(response => response.json())
             .then(data => {
                 const menuItemsDiv = document.getElementById('menuItems');
@@ -136,13 +136,58 @@
         }
 
         function showData(tableName) {
-            fetch(`/show?table=${tableName}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('table-data').innerHTML = html;
+            // Fetch the schema labels
+            fetch('/getTableSchemaLabels')
+                .then(response => response.json())
+                .then(schemaLabelsRaw => {
+                    const schemaLabels = JSON.parse(schemaLabelsRaw);
+                    // Fetch table data
+                    fetch(`/getTableData?table=${tableName}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const tableDataDiv = document.getElementById('table-data');
+                            tableDataDiv.innerHTML = ''; // Clear previous table data
+        
+                            if (data.length === 0) {
+                                tableDataDiv.innerHTML = '<p>No data available</p>';
+                                return;
+                            }
+        
+                            const table = document.createElement('table');
+                            // Create table header
+                            const headerRow = document.createElement('tr');
+                            for (const key in data[0]) {
+                                if (data[0].hasOwnProperty(key)) {
+                                    const th = document.createElement('th');
+                                    // Use human-readable label if available, otherwise use key
+                                    th.textContent = schemaLabels[key] || key;
+                                    headerRow.appendChild(th);
+                                }
+                            }
+                            table.appendChild(headerRow);
+        
+                            // Create table rows
+                            data.forEach(rowData => {
+                                const row = document.createElement('tr');
+                                for (const key in rowData) {
+                                    if (rowData.hasOwnProperty(key)) {
+                                        const cell = document.createElement('td');
+                                        cell.textContent = rowData[key];
+                                        row.appendChild(cell);
+                                    }
+                                }
+                                table.appendChild(row);
+                            });
+        
+                            // Append table to the tableDataDiv
+                            tableDataDiv.appendChild(table);
+                        })
+                        .catch(error => console.error('Error loading the table data:', error));
                 })
-                .catch(error => console.error('Error loading the table data:', error));
+                .catch(error => console.error('Error loading the schema labels:', error));
         }
+        
+        
 
         function insertData(tableName) {
             fetch(`/insert?table=${tableName}`)
