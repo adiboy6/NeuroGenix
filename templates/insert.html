@@ -86,7 +86,7 @@
                 {% endif %}
             {% else %}
                 <!-- Default text input for other fields -->
-                <label for="{{ column[0] }}">Date of Entry</label>
+                <label for="{{ column[0] }}">{{ column[0] }}</label>
                 <input type="text" id="{{ column[0] }}" name="{{ column[0] }}" required><br>
             {% endif %}
         {% endfor %}
