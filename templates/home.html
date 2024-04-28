@@ -250,7 +250,7 @@
                 alert(data.message); // Show alert with success or failure message
                 console.log(data.message); // Log the message to console
             })
-            .catch(error => console.error('Error adding data:', error));
+            .catch(error => console.error('Error submitting an operation on data:', error));
         });
         
         function updateData(tableName) {
@@ -356,15 +356,49 @@
         }
         
         function deleteData(tableName) {
-            fetch(`/delete?table=${tableName}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('table-data').innerHTML = html;
-                    // After deleting, reload table data
-                    showData(tableName);
+            fetch(`/getTableSchema?tableName=${tableName}`)
+                .then(response => response.json())
+                .then(schema => {
+                    const firstKey = Object.keys(schema)[0];
+                    const form = document.createElement('form');
+                    form.setAttribute('method', 'post');
+                    form.setAttribute('action', `/deleteData?table=${tableName}`);
+        
+                    // Create dropdown for selecting primary key
+                    const primaryKeySelect = document.createElement('select');
+                    primaryKeySelect.setAttribute('id', 'primary_key');
+                    primaryKeySelect.setAttribute('name', 'primary_key');
+                    form.appendChild(primaryKeySelect);
+        
+                    // Populate dropdown options with primary keys
+                    fetch(`/getPrimaryKeyValues?tableName=${tableName}&primaryKey=${firstKey}`)
+                        .then(response => response.json())
+                        .then(primaryKeys => {
+                            primaryKeys.forEach(key => {
+                                const option = document.createElement('option');
+                                option.setAttribute('value', key);
+                                option.textContent = key;
+                                primaryKeySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error loading primary key values:', error));
+        
+                    const rowDetails = document.createElement('div');
+                    rowDetails.setAttribute('id', 'rowDetails');
+                    form.appendChild(rowDetails);
+        
+                    const submitButton = document.createElement('button');
+                    submitButton.setAttribute('type', 'submit');
+                    submitButton.textContent = 'Delete';
+                    form.appendChild(submitButton);
+        
+                    document.getElementById('table-data').innerHTML = '';
+                    document.getElementById('table-data').appendChild(form);
+                    console.log("reached the end");
                 })
-                .catch(error => console.error('Error loading the table data:', error));
+                .catch(error => console.error('Error loading the table schema:', error));
         }
+        
         
     </script>
 </body>

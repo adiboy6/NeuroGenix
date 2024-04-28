@@ -198,40 +198,27 @@ def update():
     if not table_name:
         return "No table specified"
 
-    if request.method == 'POST':
-        schema = get_table_schema(table_name, label=False)
-        primary_key_name = schema[0][0]
-        # Handle form submission for updating the record
-        primary_key = request.form['primary_key']
-        updated_values = {col[0]: request.form[col[0]] for col in schema if col[0] != primary_key_name}
+    schema = get_table_schema(table_name, label=False)
+    primary_key_name = schema[0][0]
+    # Handle form submission for updating the record
+    primary_key = request.form['primary_key']
+    updated_values = {col[0]: request.form[col[0]] for col in schema if col[0] != primary_key_name}
 
-        # Construct the UPDATE query dynamically
-        set_clause = ', '.join([f"{col} = %s" for col in updated_values])
-        query = f"UPDATE {table_name} SET {set_clause} WHERE {primary_key_name} = %s"
-        values = list(updated_values.values()) + [primary_key]
+    # Construct the UPDATE query dynamically
+    set_clause = ', '.join([f"{col} = %s" for col in updated_values])
+    query = f"UPDATE {table_name} SET {set_clause} WHERE {primary_key_name} = %s"
+    values = list(updated_values.values()) + [primary_key]
 
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(query, values)
-            conn.commit()
-            cursor.close()
-            return f"Record in {table_name} updated successfully."
-        except psycopg2.Error as e:
-            return f"Error updating {table_name}: {e}"
-    else:
-        # For GET request, display the update form
-        schema = get_table_schema(table_name, label=False)
-        primary_key_name = schema[0][0]  # Assuming first column is the primary key
-        # Fetch primary key values for the dropdown
+    try:
         conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=DictCursor)
-        cursor.execute(f"SELECT {primary_key_name} FROM {table_name}")
-        primary_keys = cursor.fetchall()
+        cursor = conn.cursor()
+        cursor.execute(query, values)
+        conn.commit()
         cursor.close()
-        conn.close()
-        return render_template('update.html', schema=schema, table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)
-
+        return jsonify({"success": True, "message": f"Record updated into {table_name} successfully."})
+    except psycopg2.Error as e:
+        return jsonify({"success": False, "message": f"Error updating into {table_name}: {e}"})
+    
 @app.route('/postData', methods=['POST'])
 def insert():
     table_name = request.args.get('table')
@@ -256,18 +243,20 @@ def insert():
             return jsonify({"success": True, "message": f"Record inserted into {table_name} successfully."})
         except psycopg2.Error as e:
             return jsonify({"success": False, "message": f"Error inserting into {table_name}: {e}"})
-    
     else:
+        cursor.close()
+        conn.close()
         return jsonify({"success": False, "message": "No table specified"})
 
 
-@app.route('/delete', methods=['GET', 'POST'])
+@app.route('/deleteData', methods=['POST'])
 def delete():
+    print("here")
     table_name = request.args.get('table')
-    schema = get_table_schema(table_name)
+    schema = get_table_schema(table_name, label=False)
     primary_key_name = schema[0][0]  # Assuming first column is the primary key
     if not table_name:
-        return "No table specified"
+        return jsonify({"error": "No table specified"}), 400
 
     if request.method == 'POST':
         primary_key = request.form['primary_key']
@@ -280,18 +269,10 @@ def delete():
             conn.commit()
             cursor.close()
             conn.close()
-            return f"Record in {table_name} deleted successfully."
+            return jsonify({"message": f"Record in {table_name} deleted successfully."}), 200
         except psycopg2.Error as e:
-            return f"Error deleting {table_name}: {e}"
-    else:
-        # For GET request, display the delete form
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=DictCursor)
-        cursor.execute(f"SELECT {primary_key_name} FROM {table_name}")
-        primary_keys = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return render_template('delete.html', table_name=table_name, primary_keys=primary_keys, primary_key_name=primary_key_name)  
+            return jsonify({"error": f"Error deleting {table_name}: {e}"}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
