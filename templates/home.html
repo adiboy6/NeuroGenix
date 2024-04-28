@@ -9,6 +9,27 @@
             color: #5D5D5D;
             display: flex;
         }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two equal columns */
+            gap: 10px; /* Space between columns */
+        }
+        .grid-item {
+            padding: 10px; /* Space inside the div */
+            display: flex; /* This will help center the content */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+        img {
+            max-width: 100%; /* Make images fully responsive */
+            height: auto;
+        }
+        #last-image {
+            display: block; /* Ensures the image is treated as a block for margin auto */
+            max-width: 50%; /* Adjust this value based on the size you need */
+            margin: 0 auto; /* Centers the image horizontally */
+            padding: 10px; /* Maintain padding consistency */
+        }
         .left-pane {
             width: 200px;
             background-color: #f0f0f0;
@@ -75,6 +96,19 @@
     <div class="content">
         <h1>NeuroGenix</h1>
         <!-- Content will be updated based on selection -->
+        <div class="grid-container">
+            <div class="grid-item" align="center">{{ age_plot|safe }}</div>
+            <div class="grid-item" align="center">{{ gender_plot|safe }}</div>
+            <div class="grid-item" align="center">{{ education_plot|safe }}</div>
+            <div class="grid-item" align="center">{{ ethnicity_plot|safe }}</div>
+            <div class="grid-item" align="center">{{ occupation_plot|safe }}</div>
+            <div class="grid-item" align="center">{{ maritalstatus_plot|safe }}</div>
+            <div class="grid-item"><img src="{{ wordcloud1|safe }}" alt="Medications Word Cloud"></div>
+            <div class="grid-item"><img src="{{ wordcloud2|safe }}" alt="Diagnosis Word Cloud"></div>
+            <div class="grid-item"><img src="{{ wordcloud3|safe }}" alt="Allergies Word Cloud"></div>
+            <div class="grid-item"><img src="{{ wordcloud4|safe }}" alt="Vital Signs Word Cloud"></div>
+        </div>
+        <div align="center"><img src="{{ wordcloud5|safe }}" alt="Imaging Results Word Cloud" id="last-image"></div>
     </div>
 
     <script>
@@ -83,6 +117,7 @@
             .then(response => response.json())
             .then(data => {
                 const menuItemsDiv = document.getElementById('menuItems');
+                menuItemsDiv.innerHTML = ''; // Clear existing menu items        
                 const parsedData = JSON.parse(data);
                 console.log(parsedData)
                 for (const [key, value] of Object.entries(parsedData)) {
@@ -102,7 +137,7 @@
             updateSelection('Dashboard');
             fetchAndCreateMenu();
             var contentArea = document.querySelector('.content');
-            contentArea.innerHTML = '<h1>Welcome to the Dashboard</h1>';
+            // <!-- contentArea.innerHTML = '<h1>Welcome to the Dashboard</h1>'; -->
         }
 
         function selectDashboard() {
@@ -112,17 +147,30 @@
         function selectTable(tableName) {
             updateSelection(tableName);
             var contentArea = document.querySelector('.content');
-            contentArea.innerHTML = `<h1>${tableName}</h1>
-                <div class="table-buttons">
-                    <button onclick="addData('${tableName}')">Add</button>
-                    <button onclick="updateData('${tableName}')">Update</button>
-                    <button onclick="deleteData('${tableName}')">Delete</button>
-                </div>
-                <div id="table-data"></div>`;
-
-            // Automatically load table data
-            showData(tableName);
+            
+            // Fetch table names and labels
+            fetch('/getTableNamesLabels')
+                .then(response => response.json())
+                .then(data => {
+                    // Find the label corresponding to the selected table name
+                    const parsedData = JSON.parse(data);
+                    const label = parsedData[tableName];
+                    
+                    // Update the view header with the table name and label
+                    contentArea.innerHTML = `<h1>${label}</h1>
+                        <div class="table-buttons">
+                            <button onclick="addData('${tableName}')">Add</button>
+                            <button onclick="updateData('${tableName}')">Update</button>
+                            <button onclick="deleteData('${tableName}')">Delete</button>
+                        </div>
+                        <div id="table-data"></div>`;
+                    
+                    // Automatically load table data
+                    showData(tableName);
+                })
+                .catch(error => console.error('Error fetching data:', error));
         }
+        
         
         function updateSelection(tableName) {
             var menuItems = document.querySelectorAll('.left-pane .menu-item');
@@ -187,6 +235,9 @@
         }
         
         function addData(tableName) {
+            // Hide table buttons
+            document.querySelector('.table-buttons').style.display = 'none';
+
             fetch(`/getTableSchema?tableName=${tableName}`)
                 .then(response => response.json())
                 .then(schema => {
@@ -237,23 +288,10 @@
                 .catch(error => console.error('Error loading the table schema:', error));
         }
         
-        // Add an event listener to handle form submission and show alert
-        document.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
-            const form = event.target;
-            fetch(form.action, {
-                method: form.method,
-                body: new FormData(form)
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message); // Show alert with success or failure message
-                console.log(data.message); // Log the message to console
-            })
-            .catch(error => console.error('Error submitting an operation on data:', error));
-        });
-        
         function updateData(tableName) {
+            // Hide table buttons
+            document.querySelector('.table-buttons').style.display = 'none';
+
             fetch(`/getTableSchema?tableName=${tableName}`)
                 .then(response => response.json())
                 .then(schema => {
@@ -356,6 +394,9 @@
         }
         
         function deleteData(tableName) {
+            // Hide table buttons
+            document.querySelector('.table-buttons').style.display = 'none';
+
             fetch(`/getTableSchema?tableName=${tableName}`)
                 .then(response => response.json())
                 .then(schema => {
@@ -399,7 +440,21 @@
                 .catch(error => console.error('Error loading the table schema:', error));
         }
         
-        
+        // Add an event listener to handle form submission and show alert
+        document.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const form = event.target;
+            fetch(form.action, {
+                method: form.method,
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show alert with success or failure message
+                console.log(data.message); // Log the message to console
+            })
+            .catch(error => console.error('Error submitting an operation on data:', error));
+        });
     </script>
 </body>
 </html>
