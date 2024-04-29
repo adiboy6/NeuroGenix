@@ -265,25 +265,34 @@ def login():
 
 def authenticate(username, password, usertype):
     conn = get_db_connection()
-    curr = conn.cursor()
-    query = f"SELECT * FROM Users where UserType=\'{usertype}\' and UserName=\'{username}\' and password=\'{password}\'"
+    curr = conn.cursor(cursor_factory=DictCursor)
+    query = f"SELECT * FROM Users WHERE UserType=\'{usertype}\' AND UserName=\'{username}\' AND password=\'{password}\'"
     try:
         curr.execute(query)
         data = curr.fetchone()
         if data is None:
             raise psycopg2.Error
+        # Extract first name and last name from the data
+        fname, lname = data['fname'], data['lname']  # Assuming fname is at index 3 and lname is at index 4
+        # Store first name and last name in the session
+        session['fname'] = fname
+        session['lname'] = lname
         return True
     except psycopg2.Error as e:
-        data = []
-        print(f"User not found/User id incorrect/Password incorrect")
-    conn.close()
+        print(f"User not found/User id incorrect/Password incorrect: {e}")
+        return False  # Return False if authentication fails
+    finally:
+        conn.close()
 
 @app.route('/get_session_info')
 def get_session_info():
     username = session.get('username')
     usertype = session.get('usertype')
-
-    return jsonify({'username': username, 'usertype': usertype})
+    fname = session.get('fname')
+    lname = session.get('lname')
+    buttons = session.get('buttons')
+    tables_ex = session.get('tables_ex')
+    return jsonify({'username': username, 'usertype': usertype, 'fname': fname, 'lname': lname, 'buttons' : buttons, 'tables_ex' : tables_ex})
 
 @app.route('/home')
 def home():
@@ -295,11 +304,20 @@ def home():
     df = fetch_data()
     age_plot, gender_plot, education_plot, ethnicity_plot, occupation_plot, maritalstatus_plot = create_plots(df)
     wordcloud1, wordcloud2, wordcloud3, wordcloud4, wordcloud5 = fetch_text_data_and_generate_word_clouds()
-    # usertype = request.args.get('usertype')
-    button_options = ['Show', 'Insert', 'Update', 'Delete']
+    
     if usertype=='Admin':
-        # return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
-        return render_template('home.html',
+        session['buttons'] = ['Add', 'Update', 'Delete']
+        session['tables_ex'] = []
+    elif usertype=='Professor':
+        session['buttons'] = ['Add']
+    elif usertype=='Guest':
+        session['tables_ex'] = ['researchinstitution', 'users', 'securitylogs']
+        session['buttons'] = []
+    elif usertype=='Researcher' or usertype=='Clinnician':
+        session['buttons'] = ['Add', 'Update', 'Delete']
+        session['tables_ex'] = ['users', 'securitylogs']
+    
+    return render_template('home.html',
                             age_plot=age_plot,
                             gender_plot=gender_plot,
                             education_plot=education_plot,
@@ -311,21 +329,6 @@ def home():
                             wordcloud3=wordcloud3,
                             wordcloud4=wordcloud4,
                             wordcloud5=wordcloud5)
-    elif usertype=='Professor':
-        button_options.remove('Insert')
-        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
-    elif usertype=='Guest':
-        table_names.remove('researchinstitution')
-        table_names.remove('users')
-        table_names.remove('securitylogs')
-        button_options = ['Show']
-        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
-    elif usertype=='Researcher' or usertype=='Clinnician':
-        table_names.remove('users')
-        table_names.remove('securitylogs')
-        return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
-    else:
-        return redirect('/')
 
 
 ###############################################
