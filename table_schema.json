@@ -109,6 +109,7 @@
     "inputType": "text"
   },
   "maritalstatus": {
+    "labelName": "Marital Status",
     "inputType": "radio",
     "options": ["Single", "Married", "Divorced"]
   },
