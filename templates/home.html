@@ -266,17 +266,20 @@ label[for^="radio"] {
     </style>
   
 </head>
-<body onload="showDashboard()">
-  
-    
-        <div class="left-pane">
-            <div class="header-logo">
-                <img src="static/images/logo_resized.png" alt="Neurogenix Logo"> 
-            </div>
-        
+<body onload="showDashboard()">  
+    <div class="left-pane">
+        <div class="header-logo">
+            <img src="static/images/logo_resized.png" alt="Neurogenix Logo"> 
+        </div>
         <div class="menu-item" id="Dashboard" onclick="selectDashboard()">Dashboard</div>
         <div id="menuItems"></div>
-        <div class="menu-item" id="Logout" class="fas fa-sign-in-alt" a href="#logout">Logout</div>
+        <!-- Profile Tile -->
+        <div class="menu-item" id="Profile">
+            <div class="profile-container" onmouseover="showUsername()" onmouseout="hideUsername()">
+                <span id="username-text">Username</span>
+                <div class="logout-button" onclick="logout()">Logout</div>
+            </div>
+        </div>
     </div>
     <div class="content">
         <h1>NeuroGenix</h1>
@@ -297,6 +300,38 @@ label[for^="radio"] {
     </div>
 
     <script>
+        function fetchSessionInfo() {
+            fetch('/get_session_info')
+            .then(response => response.json())
+            .then(sessionInfo => {
+                // Access the username and usertype from sessionInfo
+                const username = sessionInfo.username;
+                const usertype = sessionInfo.usertype;
+                
+                // Use the retrieved username and usertype as needed in your HTML
+                console.log('Username:', username);
+                console.log('Usertype:', usertype);
+                
+                // Example: Update a specific element with the username
+                const usernameElement = document.getElementById('username');
+                if (usernameElement) {
+                    usernameElement.textContent = username;
+                }
+            })
+            .catch(error => console.error('Error fetching session info:', error));
+        }
+
+        // Function to update the profile name with the fetched username
+        async function updateProfileName() {
+            const username = await fetchSessionInfo();
+            if (username) {
+                const profileNameElement = document.getElementById('profile-name');
+                if (profileNameElement) {
+                    profileNameElement.textContent = username;
+                }
+            }
+        }
+
         function fetchAndCreateMenu() {
             fetch('/getTableNamesLabels')
             .then(response => response.json())
@@ -319,6 +354,7 @@ label[for^="radio"] {
         }
         
         function showDashboard() {
+            updateProfileName();
             updateSelection('Dashboard');
             fetchAndCreateMenu();
             var contentArea = document.querySelector('.content');

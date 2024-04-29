@@ -1,14 +1,9 @@
 import psycopg2
-from psycopg2 import extras
-from psycopg.rows import namedtuple_row, dict_row
-from psycopg2.extras import NamedTupleCursor, DictCursor
+from psycopg2.extras import DictCursor
 from urllib.parse import urlparse
-from faker import Faker
-from datetime import date
-from tqdm import tqdm
 import json
 from collections import OrderedDict
-from flask import Flask, render_template, request, redirect, jsonify, url_for, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, url_for, jsonify, session
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
@@ -19,7 +14,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import string
-import nltk
 from nltk.corpus import stopwords
 stop_words = set(stopwords.words('english'))
 
@@ -258,8 +252,13 @@ def login():
 
         # Perform authentication (e.g., check username and password against a database)
         if authenticate(username, password, usertype):
+            session['username'] = username
+            session['usertype'] = usertype
             # Authentication successful, redirect to home page or some other authenticated route
-            return redirect(url_for('home', usertype=usertype))
+            return redirect(url_for('home'))
+        else:
+            # Authentication failed, render login page with an error message
+            return render_template('login.html', error='Invalid credentials')
     else:
         # Authentication failed, render login page with an error message
         return render_template('login.html', error='Invalid credentials')
@@ -279,12 +278,24 @@ def authenticate(username, password, usertype):
         print(f"User not found/User id incorrect/Password incorrect")
     conn.close()
 
+@app.route('/get_session_info')
+def get_session_info():
+    username = session.get('username')
+    usertype = session.get('usertype')
+
+    return jsonify({'username': username, 'usertype': usertype})
+
 @app.route('/home')
 def home():
+    username = session.get('username')
+    usertype = session.get('usertype')
+    # print(username, usertype)
+    if not username or not usertype:
+        return redirect('/')
     df = fetch_data()
     age_plot, gender_plot, education_plot, ethnicity_plot, occupation_plot, maritalstatus_plot = create_plots(df)
     wordcloud1, wordcloud2, wordcloud3, wordcloud4, wordcloud5 = fetch_text_data_and_generate_word_clouds()
-    usertype = request.args.get('usertype')
+    # usertype = request.args.get('usertype')
     button_options = ['Show', 'Insert', 'Update', 'Delete']
     if usertype=='Admin':
         # return render_template('home.html', len=len(table_names), table_names=table_names, usertype=usertype, button_options=button_options)
@@ -510,4 +521,5 @@ def delete():
 
 
 if __name__ == '__main__':
+    app.secret_key = 'sssa'
     app.run(host='0.0.0.0', debug=True)
